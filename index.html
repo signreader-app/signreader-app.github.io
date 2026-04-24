@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SignReader — Traduire la Langue des Signes Française</title>
+  <meta name="description" content="SignReader traduit la Langue des Signes Française (LSF) en texte en temps réel, pour permettre à chacun de se faire comprendre à travers le monde." />
+  <meta property="og:title" content="SignReader" />
+  <meta property="og:description" content="Traduit la Langue des Signes Française en texte, pour chaque main, pour chaque voix." />
+  <meta property="og:type" content="website" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink: #0b0f14;
+      --paper: #f5f2ec;
+      --accent: #00c896;
+      --accent2: #ff5e3a;
+      --muted: #8a8a8a;
+      --card-bg: #ffffff;
+      --border: rgba(11,15,20,.08);
+      --radius: 20px;
+      --nav-h: 72px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ─────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: var(--nav-h);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 48px;
+      background: rgba(245,242,236,.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.35rem;
+      color: var(--ink);
+      text-decoration: none;
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .nav-logo .dot { 
+      width: 10px; height: 10px; border-radius: 50%; 
+      background: var(--accent); 
+      display: inline-block;
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: .6; }
+    }
+
+    .nav-links { display: flex; gap: 36px; align-items: center; list-style: none; }
+    .nav-links a {
+      font-size: .9rem; font-weight: 500; color: var(--muted);
+      text-decoration: none; transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--ink); }
+
+    .nav-cta {
+      background: var(--ink);
+      color: var(--paper) !important;
+      padding: 9px 22px;
+      border-radius: 100px;
+      font-weight: 500 !important;
+      transition: background .2s, transform .15s !important;
+    }
+    .nav-cta:hover { background: var(--accent) !important; color: var(--ink) !important; transform: translateY(-1px); }
+
+    /* ── HERO ────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      padding-top: var(--nav-h);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 0;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero-bg {
+      position: absolute; inset: 0; z-index: 0;
+      background: radial-gradient(ellipse 60% 60% at 80% 50%, rgba(0,200,150,.07) 0%, transparent 70%),
+                  radial-gradient(ellipse 40% 40% at 15% 80%, rgba(255,94,58,.05) 0%, transparent 60%);
+    }
+
+    .hero-grid-lines {
+      position: absolute; inset: 0; z-index: 0;
+      background-image: 
+        linear-gradient(rgba(11,15,20,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(11,15,20,.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    .hero-left {
+      position: relative; z-index: 1;
+      padding: 80px 64px 80px 80px;
+    }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(0,200,150,.12);
+      border: 1px solid rgba(0,200,150,.25);
+      color: #009e74;
+      padding: 6px 16px;
+      border-radius: 100px;
+      font-size: .8rem; font-weight: 600;
+      letter-spacing: .04em; text-transform: uppercase;
+      margin-bottom: 32px;
+      animation: fadeUp .6s ease both;
+    }
+
+    .hero-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(3rem, 5vw, 5.5rem);
+      font-weight: 800;
+      line-height: 1.02;
+      letter-spacing: -.03em;
+      animation: fadeUp .7s .1s ease both;
+    }
+
+    .hero-title em {
+      font-style: normal;
+      -webkit-text-stroke: 2px var(--ink);
+      color: transparent;
+    }
+
+    .hero-title .accent-word { color: var(--accent); }
+
+    .hero-sub {
+      margin-top: 28px;
+      font-size: 1.1rem;
+      line-height: 1.7;
+      color: #444;
+      max-width: 480px;
+      animation: fadeUp .7s .2s ease both;
+    }
+
+    .hero-actions {
+      margin-top: 44px;
+      display: flex; gap: 16px; flex-wrap: wrap;
+      animation: fadeUp .7s .3s ease both;
+    }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--ink); color: var(--paper);
+      padding: 15px 30px; border-radius: 100px;
+      font-family: 'Syne', sans-serif;
+      font-size: .95rem; font-weight: 700;
+      text-decoration: none;
+      transition: background .2s, transform .15s, box-shadow .2s;
+      box-shadow: 0 4px 20px rgba(11,15,20,.15);
+    }
+
+    .btn-primary:hover { background: var(--accent); color: var(--ink); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,200,150,.25); }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 10px;
+      border: 1.5px solid rgba(11,15,20,.2); color: var(--ink);
+      padding: 14px 28px; border-radius: 100px;
+      font-size: .95rem; font-weight: 500;
+      text-decoration: none;
+      transition: border-color .2s, background .2s, transform .15s;
+    }
+
+    .btn-secondary:hover { border-color: var(--ink); background: var(--ink); color: var(--paper); transform: translateY(-2px); }
+
+    .hero-right {
+      position: relative; z-index: 1;
+      height: 100%;
+      min-height: 560px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 60px 80px 60px 0;
+    }
+
+    /* Hand SVG illustration */
+    .hero-illustration {
+      position: relative;
+      width: 380px; height: 420px;
+    }
+
+    .hand-card {
+      position: absolute;
+      background: var(--card-bg);
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(11,15,20,.1);
+      display: flex; align-items: center; justify-content: center;
+      animation: float 5s ease-in-out infinite;
+    }
+
+    .hand-card-main {
+      width: 260px; height: 300px;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--ink);
+      flex-direction: column; gap: 12px;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+      50% { transform: translate(-50%, -50%) translateY(-14px); }
+    }
+
+    .hand-emoji { font-size: 80px; filter: drop-shadow(0 4px 12px rgba(0,0,0,.3)); }
+
+    .hand-label {
+      font-family: 'Syne', sans-serif;
+      color: white;
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      opacity: .5;
+    }
+
+    .hand-translation {
+      color: var(--accent);
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .bubble {
+      position: absolute;
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 12px 18px;
+      box-shadow: 0 8px 32px rgba(11,15,20,.1);
+      font-size: .85rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .bubble-1 {
+      top: 8%; left: -10%;
+      animation: float2 6s ease-in-out infinite;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .bubble-2 {
+      bottom: 12%; right: -8%;
+      animation: float3 7s ease-in-out infinite;
+      background: var(--accent);
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .bubble-3 {
+      bottom: 28%; left: -12%;
+      animation: float2 5.5s 1s ease-in-out infinite;
+    }
+
+    @keyframes float2 {
+      0%, 100% { transform: translateY(0) rotate(-2deg); }
+      50% { transform: translateY(-10px) rotate(1deg); }
+    }
+    @keyframes float3 {
+      0%, 100% { transform: translateY(0) rotate(2deg); }
+      50% { transform: translateY(-12px) rotate(-1deg); }
+    }
+
+    /* ── STATS ───────────────────────────────── */
+    .stats-bar {
+      background: var(--ink);
+      color: var(--paper);
+      padding: 48px 80px;
+      display: flex; justify-content: space-around; align-items: center;
+      gap: 24px; flex-wrap: wrap;
+    }
+
+    .stat-item { text-align: center; }
+    .stat-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.8rem; font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .stat-label { margin-top: 6px; font-size: .85rem; opacity: .55; letter-spacing: .02em; }
+
+    .stats-divider { width: 1px; height: 56px; background: rgba(255,255,255,.1); }
+
+    /* ── SECTIONS ────────────────────────────── */
+    section { padding: 100px 80px; }
+
+    .section-tag {
+      font-size: .78rem; font-weight: 700; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2rem, 3.5vw, 3rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -.025em;
+      max-width: 640px;
+    }
+
+    .section-body {
+      margin-top: 20px;
+      font-size: 1.05rem;
+      line-height: 1.75;
+      color: #555;
+      max-width: 580px;
+    }
+
+    /* ── HOW IT WORKS ────────────────────────── */
+    .how { background: white; }
+    .how-grid {
+      margin-top: 64px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      background: var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .how-card {
+      background: white;
+      padding: 44px 36px;
+      position: relative;
+      transition: background .2s;
+    }
+
+    .how-card:hover { background: #f9f9f9; }
+
+    .how-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 3.5rem; font-weight: 800;
+      color: rgba(11,15,20,.06);
+      line-height: 1;
+      margin-bottom: 24px;
+    }
+
+    .how-icon {
+      width: 52px; height: 52px;
+      background: var(--ink);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+    }
+
+    .how-card h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.2rem; font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .how-card p { font-size: .95rem; line-height: 1.65; color: #666; }
+
+    /* ── FEATURES ────────────────────────────── */
+    .features { background: var(--paper); }
+    .features-grid {
+      margin-top: 64px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+
+    .feat-card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 40px;
+      border: 1px solid var(--border);
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .feat-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(11,15,20,.08); }
+
+    .feat-card.large { grid-column: span 2; display: flex; align-items: center; gap: 48px; }
+
+    .feat-icon {
+      font-size: 2rem;
+      width: 64px; height: 64px;
+      background: rgba(0,200,150,.1);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px;
+      flex-shrink: 0;
+    }
+
+    .feat-card h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.15rem; font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .feat-card p { font-size: .95rem; line-height: 1.65; color: #666; }
+
+    /* ── MISSION ─────────────────────────────── */
+    .mission {
+      background: var(--ink);
+      color: var(--paper);
+      position: relative; overflow: hidden;
+    }
+
+    .mission-bg {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 50% 80% at 80% 50%, rgba(0,200,150,.08) 0%, transparent 60%);
+    }
+
+    .mission-inner { position: relative; z-index: 1; }
+    .mission .section-tag { color: var(--accent); }
+    .mission .section-body { color: rgba(245,242,236,.6); }
+
+    .mission-quote {
+      margin-top: 48px;
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.4rem, 2.5vw, 2rem);
+      font-weight: 700;
+      line-height: 1.45;
+      max-width: 760px;
+      border-left: 4px solid var(--accent);
+      padding-left: 28px;
+      color: var(--paper);
+    }
+
+    /* ── OPEN SOURCE ─────────────────────────── */
+    .opensource { background: white; }
+    .os-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 48px; }
+
+    .os-card {
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      transition: border-color .2s, transform .2s;
+      text-decoration: none; color: inherit;
+      display: block;
+    }
+
+    .os-card:hover { border-color: var(--ink); transform: translateY(-3px); }
+
+    .os-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .repo-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.05rem; font-weight: 700;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .repo-icon { font-size: 1.1rem; }
+    .repo-lang {
+      font-size: .78rem; font-weight: 600;
+      padding: 4px 10px; border-radius: 100px;
+      background: rgba(0,200,150,.12);
+      color: #009e74;
+    }
+    .os-card p { font-size: .9rem; color: #666; line-height: 1.6; margin-bottom: 16px; }
+    .repo-meta { display: flex; gap: 16px; font-size: .82rem; color: #999; }
+
+    /* ── CTA ─────────────────────────────────── */
+    .cta-section {
+      text-align: center;
+      padding: 120px 80px;
+      background: var(--paper);
+    }
+
+    .cta-section .section-title { margin: 0 auto; text-align: center; }
+    .cta-section .section-body { margin: 20px auto 0; text-align: center; }
+
+    .cta-actions {
+      margin-top: 48px;
+      display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+    }
+
+    /* ── FOOTER ──────────────────────────────── */
+    footer {
+      background: var(--ink);
+      color: var(--paper);
+      padding: 60px 80px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 24px;
+    }
+
+    .footer-logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.3rem; font-weight: 800;
+    }
+
+    .footer-links { display: flex; gap: 28px; list-style: none; }
+    .footer-links a { color: rgba(245,242,236,.45); font-size: .9rem; text-decoration: none; transition: color .2s; }
+    .footer-links a:hover { color: var(--accent); }
+
+    .footer-copy { color: rgba(245,242,236,.3); font-size: .82rem; }
+
+    /* ── ANIMATIONS ──────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity .7s ease, transform .7s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── RESPONSIVE ──────────────────────────── */
+    @media (max-width: 1024px) {
+      .hero { grid-template-columns: 1fr; min-height: auto; }
+      .hero-left { padding: 60px 40px 20px; }
+      .hero-right { display: none; }
+      .how-grid { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: 1fr; }
+      .feat-card.large { grid-column: span 1; flex-direction: column; }
+      section { padding: 70px 40px; }
+      nav { padding: 0 24px; }
+      .nav-links { display: none; }
+      .stats-bar { padding: 40px 24px; }
+      .stats-divider { display: none; }
+      footer { padding: 40px 24px; flex-direction: column; align-items: flex-start; }
+      .cta-section { padding: 80px 40px; }
+      .os-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a class="nav-logo" href="#">
+      <span class="dot"></span>SignReader
+    </a>
+    <ul class="nav-links">
+      <li><a href="#how">Comment ça marche</a></li>
+      <li><a href="#features">Fonctionnalités</a></li>
+      <li><a href="#mission">Mission</a></li>
+      <li><a href="#opensource">Open Source</a></li>
+      <li><a href="https://github.com/signreader-app" class="nav-cta" target="_blank">GitHub →</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero" style="padding-left:0;padding-right:0;">
+    <div class="hero-bg"></div>
+    <div class="hero-grid-lines"></div>
+
+    <div class="hero-left">
+      <div class="hero-badge">
+        <span>🤟</span> Langue des Signes Française
+      </div>
+
+      <h1 class="hero-title">
+        Chaque main<br>a une <em>voix</em> à<br>faire <span class="accent-word">entendre.</span>
+      </h1>
+
+      <p class="hero-sub">
+        SignReader traduit la <strong>Langue des Signes Française (LSF)</strong> en texte en temps réel,
+        pour que les personnes sourdes et malentendantes puissent se faire comprendre partout dans le monde.
+      </p>
+
+      <div class="hero-actions">
+        <a href="https://github.com/signreader-app" class="btn-primary" target="_blank">
+          ★ Voir sur GitHub
+        </a>
+        <a href="#how" class="btn-secondary">
+          Découvrir le projet ↓
+        </a>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <div class="hero-illustration">
+
+        <div class="bubble bubble-1">
+          <span>🤚</span> Signe détecté…
+        </div>
+
+        <div class="hand-card hand-card-main">
+          <div class="hand-emoji">🤟</div>
+          <div class="hand-label">LSF · Détection active</div>
+          <div class="hand-translation">"Je t'aime"</div>
+        </div>
+
+        <div class="bubble bubble-2">
+          ✓ Traduit en texte
+        </div>
+
+        <div class="bubble bubble-3">
+          🌍 Compris partout
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-num">LSF</div>
+      <div class="stat-label">Langue des Signes Française</div>
+    </div>
+    <div class="stats-divider"></div>
+    <div class="stat-item">
+      <div class="stat-num">~500k</div>
+      <div class="stat-label">locuteurs LSF en France</div>
+    </div>
+    <div class="stats-divider"></div>
+    <div class="stat-item">
+      <div class="stat-num">Temps réel</div>
+      <div class="stat-label">Traduction instantanée</div>
+    </div>
+    <div class="stats-divider"></div>
+    <div class="stat-item">
+      <div class="stat-num">Open Source</div>
+      <div class="stat-label">Libre & communautaire</div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <section class="how" id="how">
+    <div class="section-tag reveal">Comment ça marche</div>
+    <h2 class="section-title reveal">De la main au message, en trois étapes.</h2>
+    <p class="section-body reveal">
+      Notre pipeline combine vision par ordinateur et apprentissage automatique pour interpréter
+      les gestes LSF et les restituer sous forme de texte compréhensible par tous.
+    </p>
+
+    <div class="how-grid">
+      <div class="how-card reveal">
+        <div class="how-num">01</div>
+        <div class="how-icon">📷</div>
+        <h3>Capture des gestes</h3>
+        <p>La caméra capte les mouvements des mains et du visage en temps réel. Aucun matériel spécifique n'est requis — une simple webcam suffit.</p>
+      </div>
+
+      <div class="how-card reveal">
+        <div class="how-num">02</div>
+        <div class="how-icon">🧠</div>
+        <h3>Reconnaissance par IA</h3>
+        <p>Notre modèle d'IA, entraîné sur des données LSF, identifie les signes et les séquences gestuelles pour en extraire le sens.</p>
+      </div>
+
+      <div class="how-card reveal">
+        <div class="how-num">03</div>
+        <div class="how-icon">💬</div>
+        <h3>Texte instantané</h3>
+        <p>Le texte correspondant s'affiche en temps réel pour votre interlocuteur. La communication devient fluide, naturelle, et universelle.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features" id="features">
+    <div class="section-tag reveal">Fonctionnalités</div>
+    <h2 class="section-title reveal">Conçu pour briser les barrières.</h2>
+
+    <div class="features-grid" style="margin-top:56px;">
+      <div class="feat-card large reveal">
+        <div>
+          <div class="feat-icon" style="margin-bottom:0;margin-right:0;">🌐</div>
+        </div>
+        <div>
+          <h3>Accessibilité mondiale</h3>
+          <p>
+            La LSF est une langue riche et complète, mais peu connue en dehors de la communauté sourde. SignReader rend cette langue 
+            accessible à tous, partout dans le monde, en traduisant instantanément les signes en texte lisible par n'importe qui, 
+            dans n'importe quel contexte — que ce soit un rendez-vous médical, une réunion professionnelle, ou une simple conversation quotidienne.
+          </p>
+        </div>
+      </div>
+
+      <div class="feat-card reveal">
+        <div class="feat-icon">⚡</div>
+        <h3>Traduction en temps réel</h3>
+        <p>Traitement fluide et instantané des gestes. Aucune latence perceptible pour une communication naturelle et sans friction.</p>
+      </div>
+
+      <div class="feat-card reveal">
+        <div class="feat-icon">📱</div>
+        <h3>Multi-plateforme</h3>
+        <p>Fonctionne sur navigateur web, iOS et Android. Aucune installation complexe, utilisable partout et par tous.</p>
+      </div>
+
+      <div class="feat-card reveal">
+        <div class="feat-icon">🔒</div>
+        <h3>Respect de la vie privée</h3>
+        <p>Le traitement vidéo est effectué localement sur l'appareil. Vos gestes ne quittent jamais votre téléphone ou ordinateur.</p>
+      </div>
+
+      <div class="feat-card reveal">
+        <div class="feat-icon">📚</div>
+        <h3>Explorer la LSF</h3>
+        <p>Un dictionnaire intégré permet à n'importe qui de découvrir et d'apprendre la Langue des Signes Française, signe par signe.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- MISSION -->
+  <section class="mission" id="mission">
+    <div class="mission-bg"></div>
+    <div class="mission-inner">
+      <div class="section-tag reveal">Notre mission</div>
+      <h2 class="section-title reveal" style="color:var(--paper);">Construire des ponts, pas des barrières.</h2>
+      <p class="section-body reveal">
+        Nous croyons que la langue ne devrait jamais être un obstacle. La communauté sourde et malentendante
+        mérite les mêmes outils de communication que tout le monde — et le monde mérite de comprendre leur langue.
+      </p>
+
+      <blockquote class="mission-quote reveal">
+        "Notre objectif est de permettre aux personnes qui utilisent la Langue des Signes Française
+        de se faire comprendre à travers le monde — en traduisant leur langue en texte,
+        pour que chacun puisse les comprendre et explorer leur culture."
+      </blockquote>
+    </div>
+  </section>
+
+  <!-- OPEN SOURCE -->
+  <section class="opensource" id="opensource">
+    <div class="section-tag reveal">Open Source</div>
+    <h2 class="section-title reveal">Construit ensemble, pour tous.</h2>
+    <p class="section-body reveal">
+      SignReader est un projet open source. Toutes les contributions sont les bienvenues — développeurs,
+      chercheurs, membres de la communauté sourde, traducteurs. Rejoignez-nous sur GitHub.
+    </p>
+
+    <div class="os-grid">
+      <a class="os-card reveal" href="https://github.com/signreader-app" target="_blank">
+        <div class="os-card-top">
+          <div class="repo-name"><span class="repo-icon">📦</span> signreader-app</div>
+          <span class="repo-lang">Organisation</span>
+        </div>
+        <p>Organisation GitHub principale. Retrouvez tous nos dépôts : modèles IA, applications mobile, API et documentation.</p>
+        <div class="repo-meta">
+          <span>⭐ Suivre</span>
+          <span>🍴 Fork</span>
+          <span>→ github.com/signreader-app</span>
+        </div>
+      </a>
+
+      <a class="os-card reveal" href="https://github.com/signreader-app" target="_blank">
+        <div class="os-card-top">
+          <div class="repo-name"><span class="repo-icon">🤖</span> Modèle LSF</div>
+          <span class="repo-lang">Python · ML</span>
+        </div>
+        <p>Modèle de reconnaissance gestuelle entraîné sur un corpus LSF annoté. Basé sur MediaPipe et TensorFlow.</p>
+        <div class="repo-meta">
+          <span>⭐ Stars</span>
+          <span>🍴 Contribuer</span>
+          <span>Open Source</span>
+        </div>
+      </a>
+
+      <a class="os-card reveal" href="https://github.com/signreader-app" target="_blank">
+        <div class="os-card-top">
+          <div class="repo-name"><span class="repo-icon">📱</span> Application mobile</div>
+          <span class="repo-lang">React Native</span>
+        </div>
+        <p>Application mobile cross-platform pour iOS et Android. Interface accessible, pensée avec et pour la communauté.</p>
+        <div class="repo-meta">
+          <span>⭐ Stars</span>
+          <span>🍴 Contribuer</span>
+          <span>Open Source</span>
+        </div>
+      </a>
+
+      <a class="os-card reveal" href="https://github.com/signreader-app" target="_blank">
+        <div class="os-card-top">
+          <div class="repo-name"><span class="repo-icon">🌐</span> Extension web</div>
+          <span class="repo-lang">JavaScript</span>
+        </div>
+        <p>Extension navigateur pour utiliser SignReader directement dans vos appels vidéo — Meet, Teams, Zoom et plus.</p>
+        <div class="repo-meta">
+          <span>⭐ Stars</span>
+          <span>🍴 Contribuer</span>
+          <span>Open Source</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="section-tag">Rejoindre le projet</div>
+    <h2 class="section-title">Prêt à faire la différence ?</h2>
+    <p class="section-body">
+      Que vous soyez développeur, chercheur, utilisateur LSF ou simplement passionné par l'accessibilité —
+      il y a une place pour vous dans SignReader.
+    </p>
+
+    <div class="cta-actions">
+      <a href="https://github.com/signreader-app" class="btn-primary" target="_blank">
+        ★ Contribuer sur GitHub
+      </a>
+      <a href="https://github.com/signreader-app" class="btn-secondary" target="_blank">
+        En savoir plus →
+      </a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">🤟 SignReader</div>
+    <ul class="footer-links">
+      <li><a href="https://github.com/signreader-app" target="_blank">GitHub</a></li>
+      <li><a href="#how">Comment ça marche</a></li>
+      <li><a href="#mission">Mission</a></li>
+      <li><a href="#opensource">Open Source</a></li>
+    </ul>
+    <div class="footer-copy">© 2025 signreader-app · Open Source · Fait avec 🤟</div>
+  </footer>
+
+  <script>
+    // Scroll reveal
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((e, i) => {
+        if (e.isIntersecting) {
+          setTimeout(() => e.target.classList.add('visible'), i * 80);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // Animated hand sign cycling
+    const signs = ['🤟', '🤙', '✌️', '🖐️', '👋', '🤲', '🙏', '👌'];
+    const translations = ['"Je t\'aime"', '"Salut"', '"Paix"', '"Bonjour"', '"Au revoir"', '"Ensemble"', '"Merci"', '"D\'accord"'];
+    let idx = 0;
+
+    setInterval(() => {
+      idx = (idx + 1) % signs.length;
+      const emoji = document.querySelector('.hand-emoji');
+      const label = document.querySelector('.hand-translation');
+      if (emoji && label) {
+        emoji.style.transition = 'opacity .3s';
+        emoji.style.opacity = 0;
+        label.style.opacity = 0;
+        setTimeout(() => {
+          emoji.textContent = signs[idx];
+          label.textContent = translations[idx];
+          emoji.style.opacity = 1;
+          label.style.opacity = 1;
+        }, 320);
+      }
+    }, 2200);
+  </script>
+
+</body>
+</html>
